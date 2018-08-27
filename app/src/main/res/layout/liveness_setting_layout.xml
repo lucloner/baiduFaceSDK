@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2018 Baidu, Inc. All Rights Reserved.
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:text="无感知活体检测设置"/>
+    <RadioGroup
+            android:id="@+id/liveness_rg"
+            android:orientation="vertical"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_width="match_parent">
+        <RadioButton
+                android:id="@+id/no_liveness_rb"
+                android:text="不使用活体检测"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textSize="16dp"
+                android:textColor="@android:color/holo_red_light"
+                android:checked="true"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="5dp"
+                  android:text="活体检测主要用于判断用户释放为真人，但如使用场景下，常有固定人员看守，则可无需活体，直接采集人脸。因为活体检测虽然保障了安全性，但却会影响一定的通过率"/>
+        <RadioButton
+                android:id="@+id/rgb_liveness_rb"
+                android:text="一般安全级别"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textSize="16dp"
+                android:textColor="@android:color/holo_red_light"
+                android:checked="true"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="5dp"
+                  android:text="仅使用RGB活体(单目活体)，可有效放在照片翻拍，屏幕等攻击，前端采集可为USB单目摄像头即可"/>
+        <RadioButton
+                android:id="@+id/rgb_ir_liveness_rb"
+                android:text="中等安全级别"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textSize="16dp"
+                android:textColor="@android:color/holo_red_light"
+                android:checked="true"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="5dp"
+                  android:text="RGB+IR活体，在RGB活体的安全级别基础上，对屏幕、高清打印照片、视频、默契等防御力更强。硬件推荐迪威泰"/>
+        <RadioButton
+                android:id="@+id/rgb_depth_liveness_rb"
+                android:text="中等安全级别"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:textSize="16dp"
+                android:textColor="@android:color/holo_red_light"
+                android:checked="true"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="5dp"
+                  android:text="RGB+Depth活体，在RGB活体的安全级别基础上，对屏幕、高清打印照片、视频、默契等防御力更强。硬件推荐奥比中光mini或mini s系统"/>
+        <RadioButton
+            android:id="@+id/rgb_ir_depth_liveness_rb"
+            android:text="高级安全级别"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:textSize="16dp"
+            android:visibility="gone"
+            android:textColor="@android:color/holo_red_light"
+            android:checked="true"/>
+        <TextView android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="5dp"
+                  android:visibility="gone"
+                  android:text="RGB+NIR+Depth活体，基于近红外图像成像特点，如果屏幕无法成像，不同材质反射率不同等，可对屏幕、高清照片等攻击，更加有效的防作弊。设备推荐boteye模组"/>
+
+    </RadioGroup>
+    <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/holo_red_light"
+            android:text="注意：安全性越搞，对作弊的拒绝率越高，但也会相应影响真人的通过率，遮挡需要结合业务安全要求，视情况选择"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginLeft="30dp"/>
+    <Button
+            android:id="@+id/confirm_btn"
+            android:layout_width="250dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:text="确定"/>
+</LinearLayout>

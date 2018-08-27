@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2018 Baidu, Inc. All Rights Reserved.
+  -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center">
+    <Button
+            android:id="@+id/view_group_btn"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:text="用户组查看"/>
+    <Button
+            android:id="@+id/add_group_btn"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:text="用户组添加"/>
+    <Button
+            android:id="@+id/user_reg_btn"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:text="用户人脸注册"/>
+    <Button
+            android:id="@+id/batch_import_btn"
+            android:layout_width="250dp"
+            android:layout_height="60dp"
+            android:text="批量注册人脸"/>
+
+</LinearLayout>
