@@ -1,0 +1,1 @@
+BUILD_SUBMITTER -u . -x -e ubuntu -m baidu/aip-android/FaceRecognizeOffline -c "cd baidu/aip-android/FaceRecognizeOffline  && chmod -R +x ./ && sh ./xDeploy.sh"

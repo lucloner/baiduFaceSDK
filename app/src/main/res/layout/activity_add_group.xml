@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2018 Baidu, Inc. All Rights Reserved.
+  -->
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
+
+    <EditText
+            android:id="@+id/add_group_et"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:singleLine="true"
+            android:textSize="18sp"
+            android:hint="请输入分组（group_id）"/>
+
+    <Button
+            android:id="@+id/add_group_btn"
+            android:layout_width="250dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
+            android:layout_below="@id/add_group_et"
+            android:textSize="18sp"
+            android:text="添加"/>
+
+    <Button
+            android:id="@+id/back_btn"
+            android:layout_width="250dp"
+            android:layout_height="48dp"
+            android:layout_below="@id/add_group_btn"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:text="返回"/>
+
+</RelativeLayout>
