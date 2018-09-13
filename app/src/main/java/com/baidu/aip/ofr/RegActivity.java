@@ -24,6 +24,7 @@ import com.baidu.aip.face.FileImageSource;
 
 import com.baidu.aip.manager.FaceDetector;
 import com.baidu.aip.manager.FaceSDKManager;
+import com.baidu.aip.ofr.utils.GlobalFaceTypeModel;
 import com.baidu.aip.utils.FeatureUtils;
 import com.baidu.aip.utils.FileUitls;
 import com.baidu.aip.utils.ImageUtils;
@@ -33,6 +34,7 @@ import com.baidu.idl.facesdk.FaceTracker;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -134,8 +136,8 @@ public class RegActivity extends Activity implements View.OnClickListener {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(this, Manifest
                     .permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                Manifest.permission.CAMERA}, 100);
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.CAMERA}, 100);
                 return;
             }
             avatarIv.setImageResource(R.drawable.avatar);
@@ -151,15 +153,23 @@ public class RegActivity extends Activity implements View.OnClickListener {
                 intent.putExtra("source", SOURCE_REG);
                 startActivityForResult(intent, REQUEST_CODE_AUTO_DETECT);
             } else if (type == LivenessSettingActivity.TYPE_RGB_DEPTH_LIVENSS) {
-                Intent intent = new Intent(RegActivity.this, OrbbecLivenessDetectActivity.class);
-                intent.putExtra("source", SOURCE_REG);
-                startActivityForResult(intent, REQUEST_CODE_AUTO_DETECT);
+                int cameraType = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_CAMERA, GlobalFaceTypeModel.ORBBEC);
+                Intent intent3 = null;
+                if (cameraType == GlobalFaceTypeModel.ORBBEC) {
+                    intent3 = new Intent(RegActivity.this, OrbbecLivenessDetectActivity.class);
+                } else if (cameraType == GlobalFaceTypeModel.IMIMECT) {
+                    intent3 = new Intent(RegActivity.this, IminectLivenessDetectActivity.class);
+                } else if (cameraType == GlobalFaceTypeModel.ORBBECPRO) {
+                    intent3 = new Intent(RegActivity.this, OrbbecProLivenessDetectActivity.class);
+                }
+                intent3.putExtra("source", SOURCE_REG);
+                startActivityForResult(intent3, REQUEST_CODE_AUTO_DETECT);
             }
         } else if (v == fromAlbumButton) {
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                     != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE },
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         100);
                 return;
             }
@@ -185,7 +195,8 @@ public class RegActivity extends Activity implements View.OnClickListener {
             submitButton.setVisibility(View.VISIBLE);
         } else if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == Activity.RESULT_OK) {
             Uri uri = data.getData();
-            String filePath = getRealPathFromURI(uri);
+//            String filePath = getRealPathFromURI(uri);
+            String filePath = imageUriToFile(uri);
             detect(filePath);
         }
     }
@@ -219,7 +230,7 @@ public class RegActivity extends Activity implements View.OnClickListener {
                         ImageUtils.resize(cropBitmap, file, 300, 300);
                         RegActivity.this.faceImagePath = file.getAbsolutePath();
                         submitButton.setVisibility(View.VISIBLE);
-                    } else  {
+                    } else {
                         toast("注册人脸目录未找到");
                     }
                 } else {
@@ -251,6 +262,32 @@ public class RegActivity extends Activity implements View.OnClickListener {
         return result;
     }
 
+
+    public String imageUriToFile(final Uri uri) {
+
+        if (null == uri) return null;
+        final String scheme = uri.getScheme();
+        String data = null;
+        if (scheme == null)
+            data = uri.getPath();
+        else if (ContentResolver.SCHEME_FILE.equals(scheme)) {
+            data = uri.getPath();
+        } else if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
+            Cursor cursor = getContentResolver().query(uri, new String[]{MediaStore.Images.ImageColumns.DATA}, null, null, null);
+            if (null != cursor) {
+                if (cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+                    if (index > -1) {
+                        data = cursor.getString(index);
+                    }
+                }
+                cursor.close();
+            }
+        }
+        return data;
+    }
+
+
     private void register(final String filePath) {
 
         final String username = usernameEt.getText().toString().trim();
@@ -262,7 +299,7 @@ public class RegActivity extends Activity implements View.OnClickListener {
         Matcher matcher = pattern.matcher(username);
         if (!matcher.matches()) {
             Toast.makeText(RegActivity.this, "userid由数字、字母、下划线中的一个或者多个组合", Toast.LENGTH_SHORT).show();
-            return ;
+            return;
         }
 
         // final String groupId = groupIdEt.getText().toString().trim();
@@ -273,7 +310,7 @@ public class RegActivity extends Activity implements View.OnClickListener {
         matcher = pattern.matcher(username);
         if (!matcher.matches()) {
             Toast.makeText(RegActivity.this, "groupId由数字、字母、下划线中的一个或者多个组合", Toast.LENGTH_SHORT).show();
-            return ;
+            return;
         }
         /*
          * 用户id（由数字、字母、下划线组成），长度限制128B
@@ -305,7 +342,13 @@ public class RegActivity extends Activity implements View.OnClickListener {
             public void run() {
                 ARGBImg argbImg = FeatureUtils.getARGBImgFromPath(filePath);
                 byte[] bytes = new byte[2048];
-                int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, bytes);
+                int ret = 0;
+                int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+                if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+                    ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, bytes, 50);
+                } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+                    ret = FaceSDKManager.getInstance().getFaceFeature().faceFeatureForIDPhoto(argbImg, bytes, 50);
+                }
                 if (ret == FaceDetector.NO_FACE_DETECTED) {
                     toast("人脸太小（必须打于最小检测人脸minFaceSize），或者人脸角度太大，人脸不是朝上");
                 } else if (ret != -1) {

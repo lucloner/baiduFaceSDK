@@ -30,8 +30,10 @@ import com.baidu.aip.manager.FaceDetector;
 import com.baidu.aip.manager.FaceEnvironment;
 import com.baidu.aip.manager.FaceLiveness;
 import com.baidu.aip.manager.FaceSDKManager;
+import com.baidu.aip.ofr.utils.GlobalFaceTypeModel;
 import com.baidu.aip.utils.FeatureUtils;
 import com.baidu.aip.utils.ImageUtils;
+import com.baidu.aip.utils.PreferencesUtil;
 import com.baidu.idl.facesdk.FaceInfo;
 import com.orbbec.obDepth2.HomeKeyListener;
 import com.orbbec.view.OpenGLView;
@@ -43,17 +45,26 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.hardware.usb.UsbDevice;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import static com.baidu.aip.manager.FaceLiveness.MASK_RGB;
 
 public class OrbbecVideoMatchImageActivity extends Activity implements View.OnClickListener, OpenNIHelper
         .DeviceOpenListener,
@@ -97,6 +108,9 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
     private Object sync = new Object();
     private boolean exit = false;
 
+    // textureView用于绘制人脸框等。
+    private TextureView textureView;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -116,6 +130,8 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
     }
 
     private void findView() {
+
+        textureView=findViewById(R.id.texture_view);
 
         tipTv = (TextView) findViewById(R.id.message);
 
@@ -250,6 +266,13 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
                     }
                 });
             }
+
+            @Override
+            public void onCanvasRectCallback(LivenessModel livenessModel) {
+                if ((livenessModel.getLiveType() & MASK_RGB) == MASK_RGB) {
+                    showFrame(livenessModel.getImageFrame(), livenessModel.getTrackFaceInfo());
+                }
+            }
         });
     }
 
@@ -343,6 +366,7 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
     private void checkResult(LivenessModel model) {
 
         if (model == null) {
+            clearTip();
             return;
         }
 
@@ -401,7 +425,6 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
     }
 
 
-
     private void registerHomeListener() {
         mHomeListener = new HomeKeyListener(this);
         mHomeListener
@@ -442,7 +465,7 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (resultCode == 0) {
-            return ;
+            return;
         }
 
         if (requestCode == PICK_PHOTO && (data != null && data.getData() != null)) {
@@ -465,12 +488,18 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
                         }
                     });
                     ARGBImg argbImg = FeatureUtils.getImageInfo(bitmap);
-                    int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, photoFeature);
+                    int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+                    int ret = 0;
+                    if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+                        ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, photoFeature, 50);
+                    } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+                        ret = FaceSDKManager.getInstance().getFaceFeature().faceFeatureForIDPhoto(argbImg, photoFeature, 50);
+                    }
                     // 如果要求比较严格，可以ret FaceDetector.DETECT_CODE_OK和 FaceDetector.DETECT_CODE_HIT_LAST
                     if (ret == FaceDetector.NO_FACE_DETECTED) {
                         toast("未检测到人脸，可能原因：人脸太小（必须大于最小检测人脸minFaceSize），或者人脸角度太大，人脸不是朝上");
                         clearTip();
-                    } else if ( ret != 512) {
+                    } else if (ret != 512) {
                         toast("抽取特征失败");
                         clearTip();
                     } else if (ret == 512) {
@@ -494,7 +523,7 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
             public void run() {
                 detectDurationTv.setText("");
                 rgbLivenessScoreTv.setText("");
-                rgbLivenssDurationTv.setText("" );
+                rgbLivenssDurationTv.setText("");
                 depthLivenessScoreTv.setText("");
                 depthLivenssDurationTv.setText("");
                 matchScoreTv.setText("");
@@ -514,27 +543,34 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
         });
     }
 
+    float score = 0;
+
     private void match(final byte[] photoFeature, FaceInfo faceInfo, ImageFrame imageFrame) {
 
         if (faceInfo == null) {
             return;
         }
 
-        float raw  = Math.abs(faceInfo.headPose[0]);
-        float patch  = Math.abs(faceInfo.headPose[1]);
-        float roll  = Math.abs(faceInfo.headPose[2]);
+        float raw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
         //人脸的三个角度大于15不进行识别  角度越小，人脸越正，比对时分数越高
-        if (raw > 15 || patch > 15 ||  roll > 15) {
+        if (raw > 15 || patch > 15 || roll > 15) {
             return;
         }
 
-        matching =  true;
+        matching = true;
         int[] argb = imageFrame.getArgb();
         int rows = imageFrame.getHeight();
         int cols = imageFrame.getWidth();
         int[] landmarks = faceInfo.landmarks;
-        final float score = FaceApi.getInstance().match(photoFeature, argb, rows, cols, landmarks);
-        matching =  false;
+        int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+        if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+            score = FaceApi.getInstance().match(photoFeature, argb, rows, cols, landmarks);
+        } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+            score = FaceApi.getInstance().matchIDPhoto(photoFeature, argb, rows, cols, landmarks);
+        }
+        matching = false;
         Log.i("wtf", "score:" + score);
         runOnUiThread(new Runnable() {
             @Override
@@ -554,5 +590,90 @@ public class OrbbecVideoMatchImageActivity extends Activity implements View.OnCl
         });
     }
 
+    private Paint paint = new Paint();
+
+    {
+        paint.setColor(Color.YELLOW);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setTextSize(30);
+    }
+
+    RectF rectF = new RectF();
+
+    /**
+     * 绘制人脸框。
+     */
+    private void showFrame(ImageFrame imageFrame, FaceInfo[] faceInfos) {
+        Canvas canvas = textureView.lockCanvas();
+        if (canvas == null) {
+            textureView.unlockCanvasAndPost(canvas);
+            return;
+        }
+        if (faceInfos == null || faceInfos.length == 0) {
+            // 清空canvas
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            textureView.unlockCanvasAndPost(canvas);
+            return;
+        }
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+        FaceInfo faceInfo = faceInfos[0];
+
+        rectF.set(getFaceRectTwo(faceInfo, imageFrame));
+
+        // 检测图片的坐标和显示的坐标不一样，需要转换。
+        // mPreview[typeIndex].mapFromOriginalRect(rectF);
+
+        float yaw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
+        if (yaw > 20 || patch > 20 || roll > 20) {
+            // 不符合要求，绘制黄框
+            paint.setColor(Color.YELLOW);
+
+            String text = "请正视屏幕";
+            float width = paint.measureText(text) + 50;
+            float x = rectF.centerX() - width / 2;
+            paint.setColor(Color.RED);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawText(text, x + 25, rectF.top - 20, paint);
+            paint.setColor(Color.YELLOW);
+
+        } else {
+            // 符合检测要求，绘制绿框
+            paint.setColor(Color.GREEN);
+        }
+        paint.setStyle(Paint.Style.STROKE);
+        // 绘制框
+        canvas.drawRect(rectF, paint);
+        textureView.unlockCanvasAndPost(canvas);
+    }
+
+    public Rect getFaceRectTwo(FaceInfo faceInfo, ImageFrame frame) {
+        Rect rect = new Rect();
+        int[] points = new int[8];
+        faceInfo.getRectPoints(points);
+        int left = points[2];
+        int top = points[3];
+        int right = points[6];
+        int bottom = points[7];
+//        int previewWidth=surfaViews[typeIndex].getWidth();
+//        int previewHeight=surfaViews[typeIndex].getHeight();
+        int previewWidth = mRgbGLView.getWidth();
+        int previewHeight = mRgbGLView.getHeight();
+        float scaleW = 1.0f * previewWidth / frame.getWidth();
+        float scaleH = 1.0f * previewHeight / frame.getHeight();
+        int width = (right - left);
+        int height = (bottom - top);
+        left = (int) ((faceInfo.mCenter_x - width/2) * scaleW);
+        top = (int) ((faceInfo.mCenter_y - height/2) * scaleW);
+//        left = (int) ((faceInfo.mCenter_x)* scaleW);
+//        top =  (int) ((faceInfo.mCenter_y) * scaleW);
+        rect.top = top < 0 ? 0 : top;
+        rect.left = left < 0 ? 0 : left;
+        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width);
+        rect.bottom = (top + height) > frame.getHeight() ? frame.getHeight() : (top + height);
+        return rect;
+    }
 
 }

@@ -16,14 +16,13 @@ import android.util.Log;
 import com.orbbec.Native.DepthUtils;
 import com.orbbec.utils.GlobalDef;
 
+import org.openni.VideoFrameRef;
+import org.openni.VideoStream;
 
 import java.nio.ByteBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
-import org.openni.VideoFrameRef;
-import org.openni.VideoStream;
 
 /**
  * Created by xlj on 17-1-16.
@@ -136,13 +135,14 @@ public class OpenGLView extends GLSurfaceView {
             mTexture = ByteBuffer.allocateDirect(mCurrFrameWidth * mCurrFrameHeight * 4);
             Log.v(TAG, "mTexture: " + mTexture.limit());
         }
-        long time = frame.getTimestamp();
         ByteBuffer byteBuf = frame.getData();
 
         if (GlobalDef.TYPE_COLOR == type) {
-            DepthUtils.RGB888TORGBA(byteBuf, mTexture, mCurrFrameWidth, mCurrFrameHeight,  frame.getStrideInBytes());
+            DepthUtils.RGB888TORGBA(byteBuf, mTexture, mCurrFrameWidth, mCurrFrameHeight,
+                    frame.getStrideInBytes());
         } else if (GlobalDef.TYPE_DEPTH == type) {
-            DepthUtils.ConvertTORGBA(byteBuf, mTexture, mCurrFrameWidth, mCurrFrameHeight, frame.getStrideInBytes());
+            DepthUtils.ConvertTORGBA(byteBuf, mTexture, mCurrFrameWidth, mCurrFrameHeight,
+                    frame.getStrideInBytes());
         }
 
         requestRender();

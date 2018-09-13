@@ -28,6 +28,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -96,13 +97,14 @@ public class RgbDetectActivity extends Activity {
 
         // 设置最小人脸，该值越小，检测距离越远，该值越大，检测性能越好。范围为80-200
 
+        previewView.setMirrored(false);
         // 设置预览
         cameraImageSource.setPreviewView(previewView);
         // 设置图片源
         faceDetectManager.setImageSource(cameraImageSource);
         faceDetectManager.setUseDetect(true);
-
         textureView.setOpaque(false);
+
         // 不需要屏幕自动变黑。
         textureView.setKeepScreenOn(true);
         boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
@@ -388,6 +390,7 @@ public class RgbDetectActivity extends Activity {
             paint.setColor(Color.GREEN);
         }
         paint.setStyle(Paint.Style.STROKE);
+
         // 绘制框
         canvas.drawRect(rectF, paint);
         textureView.unlockCanvasAndPost(canvas);

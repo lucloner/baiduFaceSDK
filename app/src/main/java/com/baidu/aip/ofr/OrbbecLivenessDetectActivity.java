@@ -23,6 +23,7 @@ import org.openni.VideoMode;
 import org.openni.VideoStream;
 import org.openni.android.OpenNIHelper;
 
+import com.baidu.aip.ImageFrame;
 import com.baidu.aip.callback.ILivenessCallBack;
 import com.baidu.aip.entity.LivenessModel;
 import com.baidu.aip.face.FaceCropper;
@@ -42,6 +43,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
 import android.os.Handler;
@@ -49,9 +56,12 @@ import android.os.HandlerThread;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.TextureView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import static com.baidu.aip.manager.FaceLiveness.MASK_RGB;
 
 /**
  * 自动检测获取人脸
@@ -97,6 +107,8 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
     private Object sync = new Object();
     private boolean exit = false;
 
+    // textureView用于绘制人脸框等。
+    private TextureView textureView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -117,7 +129,7 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
 
 
     private void findView() {
-
+        textureView=findViewById(R.id.texture_view);
         tipTv = (TextView) findViewById(R.id.message);
 
         mDepthGLView = (OpenGLView) findViewById(R.id.depthGlView);
@@ -197,7 +209,7 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        unRegisterHomeListener();
     }
 
     @Override
@@ -249,6 +261,13 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
                         tipTv.setText(msg);
                     }
                 });
+            }
+
+            @Override
+            public void onCanvasRectCallback(LivenessModel livenessModel) {
+                if ((livenessModel.getLiveType() & MASK_RGB) == MASK_RGB) {
+                    showFrame(livenessModel.getImageFrame(), livenessModel.getTrackFaceInfo());
+                }
             }
         });
     }
@@ -343,6 +362,7 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
     private void checkResult(LivenessModel model) {
 
         if (model == null) {
+
             return;
         }
 
@@ -430,6 +450,20 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
                 }
             }
 
+        });
+    }
+
+
+    private void clearTip() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                detectDurationTv.setText("");
+                rgbLivenessScoreTv.setText("");
+                rgbLivenssDurationTv.setText("");
+                depthLivenessScoreTv.setText("");
+                depthLivenssDurationTv.setText("");
+            }
         });
     }
 
@@ -553,6 +587,92 @@ public class OrbbecLivenessDetectActivity extends Activity implements OpenNIHelp
         }
 
         return true;
+    }
+
+    private Paint paint = new Paint();
+
+    {
+        paint.setColor(Color.YELLOW);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setTextSize(30);
+    }
+
+    RectF rectF = new RectF();
+
+    /**
+     * 绘制人脸框。
+     */
+    private void showFrame(ImageFrame imageFrame, FaceInfo[] faceInfos) {
+        Canvas canvas = textureView.lockCanvas();
+        if (canvas == null) {
+            textureView.unlockCanvasAndPost(canvas);
+            return;
+        }
+        if (faceInfos == null || faceInfos.length == 0) {
+            // 清空canvas
+            canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            textureView.unlockCanvasAndPost(canvas);
+            return;
+        }
+        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+
+        FaceInfo faceInfo = faceInfos[0];
+
+        rectF.set(getFaceRectTwo(faceInfo, imageFrame));
+
+        // 检测图片的坐标和显示的坐标不一样，需要转换。
+        // mPreview[typeIndex].mapFromOriginalRect(rectF);
+
+        float yaw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
+        if (yaw > 20 || patch > 20 || roll > 20) {
+            // 不符合要求，绘制黄框
+            paint.setColor(Color.YELLOW);
+
+            String text = "请正视屏幕";
+            float width = paint.measureText(text) + 50;
+            float x = rectF.centerX() - width / 2;
+            paint.setColor(Color.RED);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawText(text, x + 25, rectF.top - 20, paint);
+            paint.setColor(Color.YELLOW);
+
+        } else {
+            // 符合检测要求，绘制绿框
+            paint.setColor(Color.GREEN);
+        }
+        paint.setStyle(Paint.Style.STROKE);
+        // 绘制框
+        canvas.drawRect(rectF, paint);
+        textureView.unlockCanvasAndPost(canvas);
+    }
+
+    public Rect getFaceRectTwo(FaceInfo faceInfo, ImageFrame frame) {
+        Rect rect = new Rect();
+        int[] points = new int[8];
+        faceInfo.getRectPoints(points);
+        int left = points[2];
+        int top = points[3];
+        int right = points[6];
+        int bottom = points[7];
+//        int previewWidth=surfaViews[typeIndex].getWidth();
+//        int previewHeight=surfaViews[typeIndex].getHeight();
+        int previewWidth = mRgbGLView.getWidth();
+        int previewHeight = mRgbGLView.getHeight();
+        float scaleW = 1.0f * previewWidth / frame.getWidth();
+        float scaleH = 1.0f * previewHeight / frame.getHeight();
+        int width = (right - left);
+        int height = (bottom - top);
+        left = (int) ((faceInfo.mCenter_x - width/2) * scaleW);
+        top = (int) ((faceInfo.mCenter_y - height/2) * scaleW);
+//        left = (int) ((faceInfo.mCenter_x)* scaleW);
+//        top =  (int) ((faceInfo.mCenter_y) * scaleW);
+        rect.top = top < 0 ? 0 : top;
+        rect.left = left < 0 ? 0 : left;
+        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width);
+        rect.bottom = (top + height) > frame.getHeight() ? frame.getHeight() : (top + height);
+        return rect;
     }
 
 }

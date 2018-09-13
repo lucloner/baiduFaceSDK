@@ -35,10 +35,9 @@ android {
 
 dependencies {
     // compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:26+'
+    compile project(path: ':orbbec')
     compile files('libs/baidu_license.jar')
     compile files('libs/FaceSDK.jar')
-    compile files('libs/liantian_3-1-6-1-286_0614.jar')
-
-    compile 'com.android.support:appcompat-v7:26+'
-    compile project(path:':orbbec')
+    compile files('libs/online_liantian_3-1-6-3-381_0808.jar')
 }

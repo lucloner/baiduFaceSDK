@@ -25,8 +25,10 @@ import com.baidu.aip.face.FaceDetectManager;
 import com.baidu.aip.face.PreviewView;
 import com.baidu.aip.face.camera.CameraView;
 import com.baidu.aip.face.camera.ICameraControl;
+import com.baidu.aip.manager.FaceEnvironment;
 import com.baidu.aip.manager.FaceLiveness;
 import com.baidu.aip.manager.FaceSDKManager;
+import com.baidu.aip.ofr.utils.GlobalFaceTypeModel;
 import com.baidu.aip.utils.FileUitls;
 import com.baidu.aip.utils.PreferencesUtil;
 import com.baidu.idl.facesdk.FaceInfo;
@@ -120,8 +122,8 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
         final CameraImageSource cameraImageSource = new CameraImageSource(this);
         // 图片越小检测速度越快，闸机场景640 * 480 可以满足需求。实际预览值可能和该值不同。和相机所支持的预览尺寸有关。
         // 可以通过 camera.getParameters().getSupportedPreviewSizes()查看支持列表。
-        // cameraImageSource.getCameraControl().setPreferredPreviewSize(1280, 720);
-        cameraImageSource.getCameraControl().setPreferredPreviewSize(640, 480);
+        cameraImageSource.getCameraControl().setPreferredPreviewSize(1280, 720);
+        // cameraImageSource.getCameraControl().setPreferredPreviewSize(640, 480);
 
         // 设置最小人脸，该值越小，检测距离越远，该值越大，检测性能越好。范围为80-200
         FaceSDKManager.getInstance().getFaceDetector().setMinFaceSize(100);
@@ -180,7 +182,7 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
                         testView.setImageBitmap(bitmap);
                     }
                 });
-                if ( retCode == FaceTracker.ErrCode.OK.ordinal() && infos != null) {
+                if (retCode == FaceTracker.ErrCode.OK.ordinal() && infos != null) {
                     asyncIdentity(frame, infos);
                 }
                 showFrame(frame, infos);
@@ -217,6 +219,7 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
     }
 
     private ExecutorService es = Executors.newSingleThreadExecutor();
+
     private void loadFeature2Memery() {
         if (identityStatus != FEATURE_DATAS_UNREADY) {
             return;
@@ -248,14 +251,14 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
                 }
                 int liveType = PreferencesUtil.getInt(LivenessSettingActivity.TYPE_LIVENSS, LivenessSettingActivity
                         .TYPE_NO_LIVENSS);
-                if (liveType ==  LivenessSettingActivity.TYPE_NO_LIVENSS) {
+                if (liveType == LivenessSettingActivity.TYPE_NO_LIVENSS) {
                     identity(imageFrame, faceInfos[0]);
-                } else if (liveType ==  LivenessSettingActivity.TYPE_RGB_LIVENSS) {
+                } else if (liveType == LivenessSettingActivity.TYPE_RGB_LIVENSS) {
 
-                    if (rgbLiveness(imageFrame, faceInfos[0]) > 0.9) {
+                    if (rgbLiveness(imageFrame, faceInfos[0]) > FaceEnvironment.LIVENESS_RGB_THRESHOLD) {
                         identity(imageFrame, faceInfos[0]);
                     } else {
-                        toast("rgb活体分数过低");
+                        // toast("rgb活体分数过低");
                     }
                 }
             }
@@ -285,11 +288,11 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
     private void identity(ImageFrame imageFrame, FaceInfo faceInfo) {
 
 
-        float raw  = Math.abs(faceInfo.headPose[0]);
-        float patch  = Math.abs(faceInfo.headPose[1]);
-        float roll  = Math.abs(faceInfo.headPose[2]);
+        float raw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
         // 人脸的三个角度大于20不进行识别
-        if (raw > 20 || patch > 20 ||  roll > 20) {
+        if (raw > 20 || patch > 20 || roll > 20) {
             return;
         }
 
@@ -300,12 +303,17 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
         int rows = imageFrame.getHeight();
         int cols = imageFrame.getWidth();
         int[] landmarks = faceInfo.landmarks;
-        IdentifyRet identifyRet = FaceApi.getInstance().identity(argb, rows, cols, landmarks, groupId);
 
-
+        int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+        IdentifyRet identifyRet = null;
+        if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+            identifyRet = FaceApi.getInstance().identity(argb, rows, cols, landmarks, groupId);
+        } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+            identifyRet = FaceApi.getInstance().identityForIDPhoto(argb, rows, cols, landmarks, groupId);
+        }
         displayUserOfMaxScore(identifyRet.getUserId(), identifyRet.getScore());
         identityStatus = IDENTITY_IDLE;
-        displayTip("特征抽取对比耗时:" + (System.currentTimeMillis() - starttime), featureDurationTv) ;
+        displayTip("特征抽取对比耗时:" + (System.currentTimeMillis() - starttime), featureDurationTv);
     }
 
     private void append(Map<String, Float> userId2Score, String userId, float score) {
@@ -319,7 +327,7 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
         String min = "";
         float minVal = 0;
         while (iterator.hasNext()) {
-            Map.Entry<String, Float>  entry = (Map.Entry<String, Float>)iterator.next();
+            Map.Entry<String, Float> entry = (Map.Entry<String, Float>) iterator.next();
             if (TextUtils.isEmpty(min)) {
                 min = entry.getKey();
                 minVal = entry.getValue();
@@ -357,13 +365,22 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
             @Override
             public void run() {
 
-                if (userIdOfMaxScore.equals(userId) ) {
+                if (score < 80) {
+                    scoreTv.setText("");
+                    matchUserTv.setText("");
+                    matchAvatorIv.setImageBitmap(null);
+                    return;
+                }
+
+                if (userIdOfMaxScore.equals(userId)) {
                     if (score < maxScore) {
-                        return;
+                        scoreTv.setText("" + score);
                     } else {
                         maxScore = score;
                         userOfMaxSocre.setText("userId：" + userId + "\nscore：" + score);
                         scoreTv.setText(String.valueOf(maxScore));
+                    }
+                    if (matchUserTv.getText().toString().length() > 0) {
                         return;
                     }
                 } else {
@@ -415,7 +432,6 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
     }
 
 
-
     private void displayTip(final String text, final TextView textView) {
         handler.post(new Runnable() {
             @Override
@@ -437,7 +453,6 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
 
     /**
      * 绘制人脸框。
-     *
      */
     private void showFrame(ImageFrame imageFrame, FaceInfo[] faceInfos) {
         Canvas canvas = textureView.lockCanvas();
@@ -460,9 +475,9 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
         // 检测图片的坐标和显示的坐标不一样，需要转换。
         previewView.mapFromOriginalRect(rectF);
 
-        float yaw  = Math.abs(faceInfo.headPose[0]);
-        float patch  = Math.abs(faceInfo.headPose[1]);
-        float roll  = Math.abs(faceInfo.headPose[2]);
+        float yaw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
         if (yaw > 20 || patch > 20 || roll > 20) {
             // 不符合要求，绘制黄框
             paint.setColor(Color.YELLOW);
@@ -529,12 +544,12 @@ public class RgbVideoIdentityActivity extends Activity implements View.OnClickLi
         //            left = getInfo().mCenter_x - width / 2;
         //            top = getInfo().mCenter_y - height * 2 / 3;
         left = (int) (faceInfo.mCenter_x - width / 2);
-        top = (int) (faceInfo.mCenter_y - height  / 2);
+        top = (int) (faceInfo.mCenter_y - height / 2);
 
 
         rect.top = top < 0 ? 0 : top;
         rect.left = left < 0 ? 0 : left;
-        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width) ;
+        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width);
         rect.bottom = (top + height) > frame.getHeight() ? frame.getHeight() : (top + height);
 
         return rect;

@@ -46,6 +46,8 @@ public class FaceLiveness {
     private Bitmap bitmap;
     private ILivenessCallBack livenessCallBack;
 
+    private int[] nirRgbArray;
+
     private int[] mRgbArray;
     private volatile boolean isVisHavePixls = false;
 
@@ -76,6 +78,15 @@ public class FaceLiveness {
             this.bitmap = bitmap;
             isVisHavePixls = true;
         }
+    }
+
+    public void setNirRgbInt(int[] argbData) {
+        if (nirRgbArray == null) {
+            nirRgbArray = new int[argbData.length];
+        }
+
+        System.arraycopy(argbData, 0, nirRgbArray, 0, argbData.length);
+        isVisHavePixls = true;
     }
 
     public void setRgbInt(int[] argbData) {
@@ -224,10 +235,12 @@ public class FaceLiveness {
 
         if (errorCode == FaceTracker.ErrCode.OK.ordinal() || errorCode == FaceTracker.ErrCode.DATA_HIT_LAST.ordinal()) {
             FaceInfo[] trackedfaces = FaceSDKManager.getInstance().getFaceDetector().getTrackedFaces();
+            livenessModel.setTrackFaceInfo(trackedfaces);
             if (trackedfaces != null && trackedfaces.length > 0) {
                 FaceInfo faceInfo = trackedfaces[0];
                 livenessModel.setFaceInfo(faceInfo);
 
+                // 塞选人脸，可以调节距离、角度
                 if (!filter(faceInfo, width, height)) {
                     livenessCallBack.onCallback(null);
                     return isLiveness;
@@ -244,8 +257,27 @@ public class FaceLiveness {
                 }
                 float irScore = 0;
                 if ((type & MASK_IR) == MASK_IR) {
+                    float maxWidth = 0;
+                    int maxId = 0;
+                    float detectScore = 0;
+                    if (trackedfaces != null && trackedfaces.length > 0) {
+                        for (int i = 0; i < trackedfaces.length; i++) {
+                            if (trackedfaces[i].mWidth > maxWidth) {
+                                maxId = i;
+                                maxWidth = trackedfaces[i].mWidth;
+                                detectScore = trackedfaces[i].mConf;
+                            }
+                        }
+                    }
+                    float[] faceT = new float[]{trackedfaces[maxId].mCenter_x, trackedfaces[maxId].mCenter_y, trackedfaces[maxId].mWidth, trackedfaces[maxId].mAngle};
+                    int[] shape = new int[144];
+                    int[] nPoint = new int[]{0};
+                    float[] score = new float[]{0.0F};
+                    FaceSDK.run_align(nirRgbArray,height,width,FaceSDK.ImgType.ARGB, FaceSDK.AlignMethodType.CDNN,faceT,shape,nPoint,score,detectScore);
+                    livenessModel.setShape(shape);
                     startTime = System.currentTimeMillis();
-                    irScore = irLiveness(mIrByte, width, height, trackedfaces[0].landmarks);
+//                    irScore = irLiveness(mIrByte, width, height, trackedfaces[0].landmarks);
+                    irScore = irLiveness(mIrByte, width, height, shape);
                     livenessModel.setIrLivenessDuration(System.currentTimeMillis() - startTime);
                     livenessModel.setIrLivenessScore(irScore);
                 }
@@ -274,6 +306,11 @@ public class FaceLiveness {
             livenessCallBack.onCallback(null);
         }
         // clearInfo();
+        FaceInfo[] trackedfaces = FaceSDKManager.getInstance().getFaceDetector().getTrackedFaces();
+        livenessModel.setTrackFaceInfo(trackedfaces);
+        if (livenessCallBack!=null){
+            livenessCallBack.onCanvasRectCallback(livenessModel);
+        }
         return isLiveness;
     }
 

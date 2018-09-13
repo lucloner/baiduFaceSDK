@@ -32,7 +32,7 @@ public class FaceSDKManager {
     private FaceFeature faceFeature;
     private Context context;
     private SdkInitListener sdkInitListener;
-    private volatile int initStatus = SDK_UNACTIVATION;
+    public static volatile int initStatus = SDK_UNACTIVATION;
     private Handler handler = new Handler(Looper.getMainLooper());
 
     private FaceSDKManager() {
@@ -110,7 +110,7 @@ public class FaceSDKManager {
      * @param context
      */
     private void initLiveness(Context context) {
-        FaceSDK.livenessSilentInit(context, FaceSDK.LivenessTypeId.LIVEID_VIS);
+        FaceSDK.livenessSilentInit(context, FaceSDK.LivenessTypeId.LIVEID_VIS,2);
         FaceSDK.livenessSilentInit(context, FaceSDK.LivenessTypeId.LIVEID_IR);
         FaceSDK.livenessSilentInit(context, FaceSDK.LivenessTypeId.LIVEID_DEPTH);
     }

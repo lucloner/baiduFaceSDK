@@ -20,6 +20,26 @@ public class LivenessModel {
     private float depthLivenessScore;
     private int liveType;
 
+    public int[] getShape() {
+        return shape;
+    }
+
+    public void setShape(int[] shape) {
+        this.shape = shape;
+    }
+
+    private int[] shape;
+
+    public FaceInfo[] getTrackFaceInfo() {
+        return trackFaceInfo;
+    }
+
+    public void setTrackFaceInfo(FaceInfo[] trackFaceInfo) {
+        this.trackFaceInfo = trackFaceInfo;
+    }
+
+    private FaceInfo []trackFaceInfo;
+
     public ImageFrame getImageFrame() {
         return imageFrame;
     }

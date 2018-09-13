@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<toolsconfig>
+	<node>
+		<class>BDFaceSDKTrackerTest</class>
+		<method>trackOnePersionWithOcclusionQuality</method>
+		<path>com.baidu.idl.face.test.mycase</path>
+	</node>
+	<node>
+		<class>BDFaceSDKTrackerTest</class>
+		<method>trackOnePersionWithOcclusion</method>
+		<path>com.baidu.idl.face.test.mycase</path>
+	</node>
+</toolsconfig>

@@ -1,4 +1,5 @@
 /*
  * Copyright (C) 2018 Baidu, Inc. All Rights Reserved.
  */
-include ':app', ':library', ':orbbec'
+include ':app', ':library', ':orbbec', ':iminect'
+

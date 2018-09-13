@@ -3,54 +3,105 @@
   ~ Copyright (C) 2018 Baidu, Inc. All Rights Reserved.
   -->
 <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center">
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center">
 
-    <Button android:id="@+id/image_match_image_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:text="图片vs图片(1 : 1)"/>
-    <Button android:id="@+id/video_match_image_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/image_match_image_btn"
-            android:text="图片vs视频(1 : 1)"/>
-    <Button android:id="@+id/video_identify_faces_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/video_match_image_btn"
-            android:text=" 视频vs人脸库(1 : n)"/>
-    <Button android:id="@+id/user_groud_manager_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/video_identify_faces_btn"
-            android:text="用户及组管理"/>
-    <Button android:id="@+id/liveness_setting_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/user_groud_manager_btn"
-            android:text="活体检测模式设置"/>
-    <Button android:id="@+id/device_activate_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/liveness_setting_btn"
-            android:text="设备激活"/>
- <Button android:id="@+id/rgb_ir_btn"
-            android:layout_width="250dip"
-            android:layout_height="60dip"
-            android:layout_margin="10dp"
-            android:layout_below="@id/device_activate_btn"
-            android:visibility="gone"
-            android:text="RGB+IR"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/image_match_image_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_margin="10dp"
+                android:text="图片vs图片(1 : 1)"/>
+
+            <Button
+                android:id="@+id/video_match_image_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/image_match_image_btn"
+                android:layout_margin="10dp"
+                android:text="图片vs视频(1 : 1)"/>
+
+            <Button
+                android:id="@+id/video_identify_faces_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/video_match_image_btn"
+                android:layout_margin="10dp"
+                android:text=" 视频vs人脸库(1 : n)"/>
+
+            <Button
+                android:id="@+id/bt_attr_track"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/video_identify_faces_btn"
+                android:layout_margin="10dp"
+                android:text="属性检测"/>
+
+            <Button
+                android:id="@+id/bt_multiThread"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/bt_attr_track"
+                android:layout_margin="10dp"
+                android:text="多线程使用案例"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/user_groud_manager_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/bt_multiThread"
+                android:layout_margin="10dp"
+                android:text="用户及组管理"/>
+
+            <Button
+                android:id="@+id/liveness_setting_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/user_groud_manager_btn"
+                android:layout_margin="10dp"
+                android:text="活体检测模式设置"/>
+
+            <Button
+                android:id="@+id/feature_setting_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/liveness_setting_btn"
+                android:layout_margin="10dp"
+                android:text="特征抽取模型设置"/>
+
+            <Button
+                android:id="@+id/device_activate_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/feature_setting_btn"
+                android:layout_margin="10dp"
+                android:text="设备激活"/>
+
+            <Button
+                android:id="@+id/rgb_ir_btn"
+                android:layout_width="250dip"
+                android:layout_height="60dip"
+                android:layout_below="@id/device_activate_btn"
+                android:layout_margin="10dp"
+                android:text="常见问题集锦"
+                android:visibility="visible"/>
+        </RelativeLayout>
+
+    </ScrollView>
 
 </RelativeLayout>

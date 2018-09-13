@@ -41,6 +41,7 @@
                 android:layout_centerHorizontal="true"
                 android:textSize="10dp"
                 android:layout_alignParentTop="true"
+                android:visibility="gone"
                 android:textColor="@android:color/holo_red_light"
                 android:layout_marginTop="5dp"/>
     </RelativeLayout>

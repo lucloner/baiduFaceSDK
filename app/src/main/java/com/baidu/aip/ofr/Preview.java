@@ -12,6 +12,8 @@ import java.util.List;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
 import android.util.Log;
@@ -19,6 +21,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.baidu.aip.face.PreviewView;
 
 class Preview extends ViewGroup implements SurfaceHolder.Callback {
     private final String TAG = "Preview";
@@ -30,6 +34,10 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
     Camera mCamera;
     boolean mPreviewed = false;
     boolean mSurfaceCreated = false;
+
+    private int previewWidth;
+    private int previewHeight;
+    private boolean mirrored = true;
 
     Preview(Context context, SurfaceView sv) {
         super(context);
@@ -104,8 +112,8 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
             final int width = r - l;
             final int height = b - t;
 
-            int previewWidth = width;
-            int previewHeight = height;
+            previewWidth = width;
+            previewHeight = height;
             if (mPreviewSize != null) {
                 previewWidth = mPreviewSize.width;
                 previewHeight = mPreviewSize.height;
@@ -203,5 +211,64 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
 //    		mCamera.startPreview();
 //    	}
     }
+
+    public int getPreviewWidth(){
+        return previewWidth;
+    }
+    public int getPreviewHeight(){
+        return previewHeight;
+    }
+
+
+    public void mapFromOriginalRect(RectF rectF) {
+        int selfWidth = getWidth();
+        int selfHeight = getHeight();
+        if (previewWidth == 0 || previewHeight == 0 || selfWidth == 0 || selfHeight == 0) {
+            return;
+            // TODO
+        }
+
+        Matrix matrix = new Matrix();
+
+        PreviewView.ScaleType scaleType = resolveScaleType();
+        if (scaleType == PreviewView.ScaleType.FIT_HEIGHT) {
+            int targetWith = previewWidth * selfHeight / previewHeight;
+            int delta = (targetWith - selfWidth) / 2;
+
+            float ratio = 1.0f * selfHeight / previewHeight;
+
+            matrix.postScale(ratio, ratio);
+            matrix.postTranslate(-delta, 0);
+        } else {
+            int targetHeight = previewHeight * selfWidth / previewWidth;
+            int delta = (targetHeight - selfHeight) / 2;
+
+            float ratio = 1.0f * selfWidth / previewWidth;
+
+            matrix.postScale(ratio, ratio);
+            matrix.postTranslate(0, -delta);
+        }
+        matrix.mapRect(rectF);
+
+        if (mirrored) {
+            float left = selfWidth - rectF.right;
+            float right = left + rectF.width();
+            rectF.left = left;
+            rectF.right = right;
+        }
+    }
+
+    private PreviewView.ScaleType resolveScaleType() {
+        float selfRatio = 1.0f * getWidth() / getHeight();
+        float targetRatio = 1.0f * previewWidth / previewHeight;
+
+        PreviewView.ScaleType scaleType = this.scaleType;
+        if (this.scaleType == PreviewView.ScaleType.CROP_INSIDE) {
+            scaleType = selfRatio > targetRatio ? PreviewView.ScaleType.FIT_WIDTH : PreviewView.ScaleType.FIT_HEIGHT;
+        }
+        return scaleType;
+    }
+
+    private PreviewView.ScaleType scaleType = PreviewView.ScaleType.CROP_INSIDE;
 
 }

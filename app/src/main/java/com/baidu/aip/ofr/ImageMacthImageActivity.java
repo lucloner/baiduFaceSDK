@@ -22,6 +22,7 @@ import com.baidu.aip.api.FaceApi;
 import com.baidu.aip.entity.ARGBImg;
 
 import com.baidu.aip.manager.FaceSDKManager;
+import com.baidu.aip.ofr.utils.GlobalFaceTypeModel;
 import com.baidu.aip.utils.ImageUtils;
 import com.baidu.aip.utils.PreferencesUtil;
 import com.baidu.idl.facesdk.FaceInfo;
@@ -103,7 +104,7 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
         if (faceInfos != null && faceInfos.length > 0) {
             FaceInfo faceInfo = faceInfos[0];
             if (faceInfo != null) {
-                if ( FaceSDKManager.getInstance().getFaceFeature().extractFeature(argbImg.data,
+                if (FaceSDKManager.getInstance().getFaceFeature().extractFeature(argbImg.data,
                         argbImg.height, argbImg.width, feature, faceInfo.landmarks) != -1) {
                     return true;
                 }
@@ -136,10 +137,17 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
                     intent = new Intent(this, RgbIrLivenessActivity.class);
                     startActivityForResult(intent, PICK_VIDEO_FRIST);
                 } else if (type == LivenessSettingActivity.TYPE_RGB_DEPTH_LIVENSS) {
-                    Toast.makeText(this, "当前活体策略：RGB+Depth活体，需要使用奥比中光双目摄像头", Toast.LENGTH_LONG).show();
-                    intent = new Intent(this, OrbbecLivenessDetectActivity.class);
-                    // intent = new Intent(this, OpenniLivenessDetectActivity.class);
-                    startActivityForResult(intent, PICK_VIDEO_FRIST);
+                    Toast.makeText(this, "当前活体策略：RGB+Depth活体，需要使用带深度的摄像头", Toast.LENGTH_LONG).show();
+                    int cameraType = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_CAMERA, GlobalFaceTypeModel.ORBBEC);
+                    Intent intent3 = null;
+                    if (cameraType == GlobalFaceTypeModel.ORBBEC) {
+                        intent3 = new Intent(this, OrbbecLivenessDetectActivity.class);
+                    } else if (cameraType == GlobalFaceTypeModel.IMIMECT) {
+                        intent3 = new Intent(this, IminectLivenessDetectActivity.class);
+                    } else if (cameraType == GlobalFaceTypeModel.ORBBECPRO) {
+                        intent3 = new Intent(this, OrbbecProLivenessDetectActivity.class);
+                    }
+                    startActivityForResult(intent3, PICK_VIDEO_FRIST);
                 }
                 break;
             case R.id.compare_btn:
@@ -167,9 +175,17 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
                     intent = new Intent(this, RgbIrLivenessActivity.class);
                     startActivityForResult(intent, PICK_VIDEO_SECOND);
                 } else if (type == LivenessSettingActivity.TYPE_RGB_DEPTH_LIVENSS) {
-                    Toast.makeText(this, "当前活体策略：RGB+Depth活体,需要使用奥比中光双目摄像头", Toast.LENGTH_LONG).show();
-                    intent = new Intent(this, OrbbecLivenessDetectActivity.class);
-                    startActivityForResult(intent, PICK_VIDEO_SECOND);
+                    Toast.makeText(this, "当前活体策略：RGB+Depth活体,需要使用带深度的摄像头", Toast.LENGTH_LONG).show();
+                    int cameraType = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_CAMERA, GlobalFaceTypeModel.ORBBEC);
+                    Intent intent2 = null;
+                    if (cameraType == GlobalFaceTypeModel.ORBBEC) {
+                        intent2 = new Intent(this, OrbbecLivenessDetectActivity.class);
+                    } else if (cameraType == GlobalFaceTypeModel.IMIMECT) {
+                        intent2 = new Intent(this, IminectLivenessDetectActivity.class);
+                    } else if (cameraType == GlobalFaceTypeModel.ORBBECPRO) {
+                        intent2 = new Intent(this, OrbbecProLivenessDetectActivity.class);
+                    }
+                    startActivityForResult(intent2, PICK_VIDEO_SECOND);
                 }
                 break;
             default:
@@ -202,22 +218,21 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-        } else if (requestCode == PICK_VIDEO_FRIST && (data != null )) {
+        } else if (requestCode == PICK_VIDEO_FRIST && (data != null)) {
             String faceImagePath = data.getStringExtra("file_path");
-
             Bitmap bitmap = BitmapFactory.decodeFile(faceImagePath);
             firstIv.setImageBitmap(bitmap);
-            delay(bitmap, firstFeature, 1);
+            syncFeature(bitmap, firstFeature, 1);
         } else if (requestCode == PICK_VIDEO_SECOND && (data != null)) {
             String faceImagePath = data.getStringExtra("file_path");
-
             Bitmap bitmap = BitmapFactory.decodeFile(faceImagePath);
             secondIv.setImageBitmap(bitmap);
-            delay(bitmap, secondFeature, 2);
+            syncFeature(bitmap, secondFeature, 2);
         }
     }
 
     Handler handler = new Handler();
+
     private void delay(final Bitmap bitmap, final byte[] feature, final int index) {
         handler.postDelayed(new Runnable() {
             @Override
@@ -226,12 +241,19 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
             }
         }, 2000);
     }
-    private void syncFeature(final Bitmap bitmap, final byte[] feature, final int index)  {
+
+    private void syncFeature(final Bitmap bitmap, final byte[] feature, final int index) {
 
         Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
-                final int ret = FaceApi.getInstance().getFeature(bitmap, feature);
+                int ret = 0;
+                int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+                if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+                    ret = FaceApi.getInstance().getFeature(bitmap, feature, 50);
+                } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+                    ret = FaceApi.getInstance().getFeatureForIDPhoto(bitmap, feature, 50);
+                }
                 Log.i("wtf", "ret:" + ret);
                 if (ret == 512 && index == 1) {
                     firstFeatureFinished = true;
@@ -249,7 +271,7 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
                 } else if (ret == -103) {
                     toast("未完成人脸比对，可能原因，图片2未检测到人脸");
                 } else {
-                    toast( "未完成人脸比对，可能原因，"
+                    toast("未完成人脸比对，可能原因，"
                             + "人脸太小（小于sdk初始化设置的最小检测人脸）"
                             + "人脸不是朝上，sdk不能检测出人脸");
                 }
@@ -269,7 +291,13 @@ public class ImageMacthImageActivity extends Activity implements View.OnClickLis
             return;
         }
 
-        float score = FaceApi.getInstance().match(firstFeature, secondFeature);
+        float score = 0;
+        int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+        if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+            score = FaceApi.getInstance().match(firstFeature, secondFeature);
+        } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+            score = FaceApi.getInstance().matchIDPhoto(firstFeature, secondFeature);
+        }
         scoreIv.setText("相似度：" + score);
     }
 

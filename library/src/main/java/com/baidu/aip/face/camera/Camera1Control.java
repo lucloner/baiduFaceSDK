@@ -202,22 +202,22 @@ public class Camera1Control implements ICameraControl {
         }
         final int temp = detectRotation;
         try {
-            if (cameraFacing == ICameraControl.CAMERA_USB) {
+            //if (cameraFacing == ICameraControl.CAMERA_USB) {
                 camera.setPreviewTexture(textureView.getSurfaceTexture());
-            } else {
-                surfaceTexture = new SurfaceTexture(11);
-                camera.setPreviewTexture(surfaceTexture);
-                uiHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        if (textureView != null) {
-                            surfaceTexture.detachFromGLContext();
-                            textureView.setSurfaceTexture(surfaceTexture);
-                        }
-                    }
-                });
-            }
+//            } else {
+//            surfaceTexture = new SurfaceTexture(11);
+//            camera.setPreviewTexture(surfaceTexture);
+//            uiHandler.post(new Runnable() {
+//                @Override
+//                public void run() {
+//
+//                    if (textureView != null) {
+//                        surfaceTexture.detachFromGLContext();
+//                        textureView.setSurfaceTexture(surfaceTexture);
+//                    }
+//                }
+//            });
+       // }
 //            camera.addCallbackBuffer(new byte[size.width * size.height * 3 / 2]);
 //            camera.setPreviewCallbackWithBuffer(new Camera.PreviewCallback() {
 //

@@ -14,6 +14,40 @@
             android:layout_height="match_parent"
             android:baselineAligned="false" >
 
+        <RelativeLayout
+            android:layout_width="640px"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center">
+
+            <SurfaceView
+                android:id="@+id/surface_one"
+                android:layout_width="640px"
+                android:layout_height="480px"/>
+
+            <TextureView
+                android:id="@+id/texture_view_one"
+                android:layout_width="640px"
+                android:layout_height="480px"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="640px"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_gravity="center">
+
+            <SurfaceView
+                android:id="@+id/surface_two"
+                android:layout_width="640px"
+                android:layout_height="480px"/>
+
+            <TextureView
+                android:id="@+id/texture_view"
+                android:layout_width="640px"
+                android:layout_height="480px"/>
+        </RelativeLayout>
+
     </LinearLayout>
     <ImageView android:id="@+id/test_iv"
                android:layout_width="160dp"

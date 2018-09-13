@@ -62,4 +62,6 @@ public interface PreviewView {
      * @return 预览缩放类型
      */
     ScaleType getScaleType();
+
+    void setMirrored(boolean mirrored);
 }

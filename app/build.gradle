@@ -37,10 +37,11 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:26+'
     compile 'com.android.support:recyclerview-v7:26+'
-    compile project(path:':library')
-    compile project(path:':orbbec')
+    compile project(path: ':library')
+    compile project(path: ':orbbec')
+    compile project(path: ':iminect')
 }

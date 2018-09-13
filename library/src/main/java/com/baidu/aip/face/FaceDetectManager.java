@@ -155,7 +155,7 @@ public class FaceDetectManager {
 //            skip = !skip;
 //        }
 
-        int value;
+        int value = 0;
 
         ImageFrame frame = imageSource.borrowImageFrame();
         frame.setArgb(argb);
@@ -172,7 +172,12 @@ public class FaceDetectManager {
         if (useDetect) {
             long starttime = System.currentTimeMillis();
             value = FaceSDKManager.getInstance().getFaceDetector().detect(frame);
+            //FaceSDKManager.getInstance().getFaceDetector().detectMultiFace(frame,5);
             FaceInfo[] faces = FaceSDKManager.getInstance().getFaceDetector().getTrackedFaces();
+            if (faces!=null){
+                Log.e("faceMulti",faces.length+"");
+            }
+
             Log.e("wtf", value + " process->" + (System.currentTimeMillis() - starttime));
 
             if (value == 0) {

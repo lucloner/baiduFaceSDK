@@ -100,6 +100,7 @@ public class FaceDetector {
         this.initStatus = status;
     }
 
+
     /**
      * 进行人脸检测。返回检测结果代码。如果返回值为DETECT_CODE_OK 可调用 getTrackedFaces 获取人脸相关信息。
      *
@@ -136,6 +137,18 @@ public class FaceDetector {
             return UNKNOW_TYPE;
         }
         return detect(imageFrame.getArgb(), imageFrame.getWidth(), imageFrame.getHeight());
+    }
+
+    public void detectMultiFace(ImageFrame imageFrame,int multiFaceNumber ) {
+        detectMultiFace(imageFrame.getArgb(), imageFrame.getWidth(), imageFrame.getHeight(),multiFaceNumber);
+    }
+
+    public void detectMultiFace(int[] argb, int width, int height,int multiFaceNumber) {
+        this.mFaceTracker
+//                .prepare_data_for_verify(argb, height, width, FaceSDK.ImgType.ARGB.ordinal(),
+//                        FaceTracker.ActionType.RECOGNIZE.ordinal());
+        .track(argb, height, width, FaceSDK.ImgType.ARGB.ordinal(),
+                multiFaceNumber);
     }
 
     /**
@@ -178,7 +191,9 @@ public class FaceDetector {
      * 重置跟踪人脸。下次将重新开始跟踪。
      */
     public void clearTrackedFaces() {
-        mFaceTracker.clearTrackedFaces();
+        if (mFaceTracker != null) {
+            mFaceTracker.clearTrackedFaces();
+        }
     }
 
 
@@ -197,6 +212,9 @@ public class FaceDetector {
      */
     public void setNotFaceThreshold(float threshold) {
         this.faceEnvironment.setNotFaceThreshold(threshold);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_notFace_thr(threshold);
+        }
     }
 
     /**
@@ -207,6 +225,9 @@ public class FaceDetector {
      */
     public void setMinFaceSize(@IntRange(from = 80, to = 200) int faceSize) {
         this.faceEnvironment.setMinFaceSize(faceSize);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_min_face_size(faceSize);
+        }
     }
 
     /** 设置最低光照强度（YUV中的Y分量）取值范围0-255，建议值大于40.
@@ -214,6 +235,9 @@ public class FaceDetector {
      */
     public void setIlluminationThreshold(float threshold) {
         this.faceEnvironment.setIlluminationThreshold(threshold);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_illum_thr(threshold);
+        }
     }
 
     /**
@@ -223,6 +247,9 @@ public class FaceDetector {
      */
     public void setBlurrinessThreshold(@FloatRange(from = 0, to = 1) float threshold) {
         this.faceEnvironment.setBlurrinessThreshold(threshold);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_blur_thr(threshold);
+        }
     }
 
     /**
@@ -231,6 +258,9 @@ public class FaceDetector {
      */
     public void setOcclulationThreshold(float threshold) {
         this.faceEnvironment.setOcclulationThreshold(threshold);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_occlu_thr(threshold);
+        }
     }
 
     /**
@@ -240,6 +270,9 @@ public class FaceDetector {
      */
     public void setCheckQuality(boolean checkQuality) {
         this.faceEnvironment.setCheckQuality(checkQuality);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_isCheckQuality(checkQuality);
+        }
     }
 
     // yaw 左右
@@ -265,10 +298,16 @@ public class FaceDetector {
      */
     public void setDetectInterval(int interval) {
         this.faceEnvironment.setDetectInterval(interval);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_detect_in_video_interval(interval);
+        }
     }
 
     public void setTrackInterval(int interval) {
         this.faceEnvironment.setTrackInterval(interval);
+        if (mFaceTracker != null) {
+            mFaceTracker.set_track_by_detection_interval(interval);
+        }
     }
 
 }

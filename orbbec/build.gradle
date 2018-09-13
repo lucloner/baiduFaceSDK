@@ -45,7 +45,12 @@ android {
 
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:26.+'
     compile files('libs/openni2.3.jar')
+//    implementation files('libs/common.aar')
+    compile files('libs/libcommon.jar')
+    compile files('libs/libuvccamera.jar')
+    compile files('libs/usbCameraCommon.jar')
+//    implementation files('libs/uvccamera.aar')
 }

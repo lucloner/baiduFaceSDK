@@ -19,6 +19,7 @@ import com.baidu.aip.face.camera.ICameraControl;
 import com.baidu.aip.manager.FaceDetector;
 import com.baidu.aip.manager.FaceLiveness;
 import com.baidu.aip.manager.FaceSDKManager;
+import com.baidu.aip.ofr.utils.GlobalFaceTypeModel;
 import com.baidu.aip.utils.FeatureUtils;
 import com.baidu.aip.utils.ImageUtils;
 import com.baidu.aip.utils.PreferencesUtil;
@@ -135,7 +136,7 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
         // TODO 选择使用usb摄像头
         cameraImageSource.getCameraControl().setCameraFacing(ICameraControl.CAMERA_USB);
 //        // 如果不设置，人脸框会镜像，显示不准
-         previewView.getTextureView().setScaleX(-1);
+        previewView.getTextureView().setScaleX(-1);
 
         // TODO 选择使用后置摄像头
 //        cameraImageSource.getCameraControl().setCameraFacing(ICameraControl.CAMERA_FACING_BACK);
@@ -149,14 +150,14 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
             @Override
             public void onDetectFace(int retCode, FaceInfo[] infos, ImageFrame frame) {
                 // TODO 显示检测的图片。用于调试，如果人脸sdk检测的人脸需要朝上，可以通过该图片判断
-                 final Bitmap bitmap =
-                   Bitmap.createBitmap(frame.getArgb(), frame.getWidth(), frame.getHeight(), Bitmap.Config.ARGB_8888);
-                   handler.post(new Runnable() {
-                      @Override
-                      public void run() {
-                          testView.setImageBitmap(bitmap);
-                      }
-                  });
+                final Bitmap bitmap =
+                        Bitmap.createBitmap(frame.getArgb(), frame.getWidth(), frame.getHeight(), Bitmap.Config.ARGB_8888);
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        testView.setImageBitmap(bitmap);
+                    }
+                });
                 checkFace(retCode, infos, frame);
                 showFrame(frame, infos);
 
@@ -186,16 +187,16 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
 
     @Override
     public void onClick(View v) {
-       if (v.getId() == R.id.image_feature_btn) {
-           // 检测相册的图片人脸时不能同时检测视频流的人脸，视频流关闭检测
-           faceDetectManager.setUseDetect(false);
-           Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-           startActivityForResult(intent, PICK_PHOTO);
-       }
+        if (v.getId() == R.id.image_feature_btn) {
+            // 检测相册的图片人脸时不能同时检测视频流的人脸，视频流关闭检测
+            faceDetectManager.setUseDetect(false);
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, PICK_PHOTO);
+        }
     }
 
     private void checkFace(int retCode, FaceInfo[] faceInfos, ImageFrame frame) {
-        if ( retCode == FaceTracker.ErrCode.OK.ordinal() && faceInfos != null) {
+        if (retCode == FaceTracker.ErrCode.OK.ordinal() && faceInfos != null) {
             FaceInfo faceInfo = faceInfos[0];
             String tip = filter(faceInfo, frame);
             displayTip(tip);
@@ -232,25 +233,25 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
         } else if (ratio < 0.2) {
             tip = "人脸离屏幕太远，请调整与屏幕的距离";
             return tip;
-        } else if (faceInfo.mCenter_x > width * 3 / 4 ) {
+        } else if (faceInfo.mCenter_x > width * 3 / 4) {
             tip = "人脸在屏幕中太靠右";
             return tip;
-        } else if (faceInfo.mCenter_x < width / 4 ) {
+        } else if (faceInfo.mCenter_x < width / 4) {
             tip = "人脸在屏幕中太靠左";
             return tip;
-        } else if (faceInfo.mCenter_y > height * 3 / 4 ) {
-            tip = "人脸在屏幕中太靠下" ;
+        } else if (faceInfo.mCenter_y > height * 3 / 4) {
+            tip = "人脸在屏幕中太靠下";
             return tip;
-        } else if (faceInfo.mCenter_x < height / 4 ) {
+        } else if (faceInfo.mCenter_x < height / 4) {
             tip = "人脸在屏幕中太靠上";
             return tip;
         }
 
         int liveType = PreferencesUtil.getInt(LivenessSettingActivity.TYPE_LIVENSS, LivenessSettingActivity
                 .TYPE_NO_LIVENSS);
-        if (liveType ==  LivenessSettingActivity.TYPE_NO_LIVENSS) {
+        if (liveType == LivenessSettingActivity.TYPE_NO_LIVENSS) {
             asyncMath(photoFeature, faceInfo, imageFrame);
-        } else if (liveType ==  LivenessSettingActivity.TYPE_RGB_LIVENSS) {
+        } else if (liveType == LivenessSettingActivity.TYPE_RGB_LIVENSS) {
 
             float rgbLivenessScore = rgbLiveness(imageFrame, faceInfo);
             if (rgbLivenessScore > 0.9) {
@@ -266,18 +267,18 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
 
     private String checkFaceCode(int errCode) {
         String tip = "";
-        if (errCode == FaceTracker.ErrCode.NO_FACE_DETECTED.ordinal() ) {
+        if (errCode == FaceTracker.ErrCode.NO_FACE_DETECTED.ordinal()) {
             //            tip = "未检测到人脸";
         } else if (errCode == FaceTracker.ErrCode.IMG_BLURED.ordinal() ||
                 errCode == FaceTracker.ErrCode.PITCH_OUT_OF_DOWN_MAX_RANGE.ordinal() ||
                 errCode == FaceTracker.ErrCode.PITCH_OUT_OF_UP_MAX_RANGE.ordinal() ||
                 errCode == FaceTracker.ErrCode.YAW_OUT_OF_LEFT_MAX_RANGE.ordinal() ||
-                errCode == FaceTracker.ErrCode.YAW_OUT_OF_RIGHT_MAX_RANGE.ordinal())  {
+                errCode == FaceTracker.ErrCode.YAW_OUT_OF_RIGHT_MAX_RANGE.ordinal()) {
             tip = "请静止平视屏幕";
         } else if (errCode == FaceTracker.ErrCode.POOR_ILLUMINATION.ordinal()) {
             tip = "光线太暗，请到更明亮的地方";
-        } else if (errCode == FaceTracker.ErrCode.UNKNOW_TYPE.ordinal()){
-            tip =  "未检测到人脸";
+        } else if (errCode == FaceTracker.ErrCode.UNKNOW_TYPE.ordinal()) {
+            tip = "未检测到人脸";
         }
         return tip;
     }
@@ -313,21 +314,27 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
             return;
         }
 
-        float raw  = Math.abs(faceInfo.headPose[0]);
-        float patch  = Math.abs(faceInfo.headPose[1]);
-        float roll  = Math.abs(faceInfo.headPose[2]);
+        float raw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
         //人脸的三个角度大于20不进行识别  角度越小，人脸越正，比对时分数越高
-        if (raw > 20 || patch > 20 ||  roll > 20) {
+        if (raw > 20 || patch > 20 || roll > 20) {
             return;
         }
 
-        matching =  true;
+        matching = true;
         int[] argb = imageFrame.getArgb();
         int rows = imageFrame.getHeight();
         int cols = imageFrame.getWidth();
         int[] landmarks = faceInfo.landmarks;
-        final float score = FaceApi.getInstance().match(photoFeature, argb, rows, cols, landmarks);
-        matching =  false;
+        int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+        float score = 0;
+        if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+            score = FaceApi.getInstance().match(photoFeature, argb, rows, cols, landmarks);
+        } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+            score = FaceApi.getInstance().matchIDPhoto(photoFeature, argb, rows, cols, landmarks);
+        }
+        matching = false;
         displayTip("比对得分：" + score, matchScoreTv);
 
     }
@@ -336,7 +343,7 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (resultCode == 0) {
-            return ;
+            return;
         }
 
         if (requestCode == PICK_PHOTO && (data != null && data.getData() != null)) {
@@ -354,11 +361,17 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
                 try {
                     final Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
                     ARGBImg argbImg = FeatureUtils.getImageInfo(bitmap);
-                    int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, photoFeature);
+                    int type = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_MODEL, GlobalFaceTypeModel.RECOGNIZE_LIVE);
+                    int ret = 0;
+                    if (type == GlobalFaceTypeModel.RECOGNIZE_LIVE) {
+                        ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, photoFeature, 50);
+                    } else if (type == GlobalFaceTypeModel.RECOGNIZE_ID_PHOTO) {
+                        ret = FaceSDKManager.getInstance().getFaceFeature().faceFeatureForIDPhoto(argbImg, photoFeature, 50);
+                    }
                     // 如果要求比较严格，可以ret FaceDetector.DETECT_CODE_OK和 FaceDetector.DETECT_CODE_HIT_LAST
                     if (ret == FaceDetector.NO_FACE_DETECTED) {
                         toast("未检测到人脸，可能原因：人脸太小（必须大于最小检测人脸minFaceSize），或者人脸角度太大，人脸不是朝上");
-                    } else if ( ret != 512) {
+                    } else if (ret != 512) {
                         toast("抽取特征失败");
                     } else if (ret == 512) {
                         faceDetectManager.setUseDetect(true);
@@ -397,6 +410,7 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
             }
         });
     }
+
     private void displayTip(final String tip, final TextView textView) {
         runOnUiThread(new Runnable() {
             @Override
@@ -419,7 +433,6 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
 
     /**
      * 绘制人脸框。
-     *
      */
     private void showFrame(ImageFrame imageFrame, FaceInfo[] faceInfos) {
         Canvas canvas = textureView.lockCanvas();
@@ -442,9 +455,9 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
         // 检测图片的坐标和显示的坐标不一样，需要转换。
         previewView.mapFromOriginalRect(rectF);
 
-        float yaw  = Math.abs(faceInfo.headPose[0]);
-        float patch  = Math.abs(faceInfo.headPose[1]);
-        float roll  = Math.abs(faceInfo.headPose[2]);
+        float yaw = Math.abs(faceInfo.headPose[0]);
+        float patch = Math.abs(faceInfo.headPose[1]);
+        float roll = Math.abs(faceInfo.headPose[2]);
         if (yaw > 20 || patch > 20 || roll > 20) {
             // 不符合要求，绘制黄框
             paint.setColor(Color.YELLOW);
@@ -543,12 +556,12 @@ public class RgbVideoMatchImageActivity extends Activity implements View.OnClick
         //            left = getInfo().mCenter_x - width / 2;
         //            top = getInfo().mCenter_y - height * 2 / 3;
         left = (int) (faceInfo.mCenter_x - width / 2);
-        top = (int) (faceInfo.mCenter_y - height  / 2);
+        top = (int) (faceInfo.mCenter_y - height / 2);
 
 
         rect.top = top < 0 ? 0 : top;
         rect.left = left < 0 ? 0 : left;
-        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width) ;
+        rect.right = (left + width) > frame.getWidth() ? frame.getWidth() : (left + width);
         rect.bottom = (top + height) > frame.getHeight() ? frame.getHeight() : (top + height);
 
         return rect;

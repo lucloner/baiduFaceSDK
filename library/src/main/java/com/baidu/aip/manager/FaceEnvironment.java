@@ -12,7 +12,11 @@ import android.support.annotation.IntRange;
  * SDK全局配置信息
  */
 public class FaceEnvironment {
-    // SDK配置参数
+
+    // SDK版本号
+    public static final String VERSION = "1.1.0";
+
+        // SDK配置参数
     public static final float VALUE_BRIGHTNESS = 40f;
     public static final float VALUE_BLURNESS = 0.5f;
     public static final float VALUE_OCCLUSION = 0.5f;
@@ -38,7 +42,7 @@ public class FaceEnvironment {
     /**
      * 默认最小人脸，小于此值的人脸将检测不出来
      */
-    public static final int VALUE_MIN_FACE_SIZE = 100;
+    public static final int VALUE_MIN_FACE_SIZE = 80;
 
     // 根据设备的cpu核心数设定人脸sdk使用的线程数，如双核设置为2，四核设置为4
     private int numberOfThreads;

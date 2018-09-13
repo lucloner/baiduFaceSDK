@@ -3,27 +3,38 @@
  */
 package com.baidu.aip.ui;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.baidu.aip.library.R;
 import com.baidu.aip.manager.FaceSDKManager;
 import com.baidu.aip.utils.FileUitls;
 import com.baidu.aip.utils.NetRequest;
 import com.baidu.aip.utils.PreferencesUtil;
+import com.baidu.aip.utils.ZipUtil;
+import com.baidu.idl.facesdk.FaceSDK;
 import com.baidu.idl.license.AndroidLicenser;
 
+import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -51,6 +62,12 @@ public class Activation {
     private Handler handler = new Handler(Looper.getMainLooper());
     private ActivationCallback activationCallback;
     private int lastKeyLen = 0;
+
+    private TextView tvOnLineText,tvOffLineText;
+    private Button btOffLineActive;
+    ArrayList<String> list = new ArrayList<>();
+
+    private boolean success = false;
 
     public Activation(Context context) {
         this.context = context;
@@ -88,7 +105,8 @@ public class Activation {
 
         TextView titleTv = new TextView(context);
         titleTv.setText("设备激活");
-        titleTv.setTextSize(dip2px(10));
+        titleTv.setTextSize(dip2px(15));
+        titleTv.setTextColor(context.getResources().getColor(R.color.black));
 
         LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -100,7 +118,10 @@ public class Activation {
 
 
         deviceIdTv = new TextView(context);
-        deviceIdTv.setText(device);
+        deviceIdTv.setTextIsSelectable(true);
+        deviceIdTv.setText("设备指纹："+device);
+        deviceIdTv.setTextSize(dip2px(12));
+        deviceIdTv.setTextColor(context.getResources().getColor(R.color.black));
 
         LinearLayout.LayoutParams deviceIdParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -124,29 +145,72 @@ public class Activation {
         keyEt.setTransformationMethod(new AllCapTransformationMethod(true));
         keyEt.setWidth(dip2px(260));
 
-        LinearLayout.LayoutParams activateParams = new LinearLayout.LayoutParams(dip2px(260), dip2px(48));
+        LinearLayout.LayoutParams activateParams = new LinearLayout.LayoutParams(dip2px(180), dip2px(40));
         activateParams.gravity = Gravity.CENTER;
         activateParams.topMargin = dip2px(40);
         activateParams.rightMargin = dip2px(40);
         activateParams.leftMargin = dip2px(40);
         activateBtn = new Button(context);
         // activateBtn.setId(100);
-        activateBtn.setText("激      活");
+        activateBtn.setText("在线激活");
+        activateBtn.setTextSize(dip2px(12));
+        activateBtn.setTextColor(context.getResources().getColor(R.color.white));
+        activateBtn.setBackgroundColor(context.getResources().getColor(R.color.buttonColor));
 
-        LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(dip2px(260), dip2px(48));
+        LinearLayout.LayoutParams activateParamsone = new LinearLayout.LayoutParams(dip2px(360), dip2px(48));
+        activateParamsone.gravity = Gravity.CENTER;
+        activateParamsone.topMargin = dip2px(8);
+        activateParamsone.rightMargin = dip2px(20);
+        activateParamsone.leftMargin = dip2px(60);
+        tvOnLineText = new TextView(context);
+        tvOnLineText.setText("在线激活:输入序列号，保持设备联网，SDK会自动进行激活");
+        tvOnLineText.setTextSize(dip2px(8));
+        tvOnLineText.setTextColor(context.getResources().getColor(R.color.black));
+
+
+        LinearLayout.LayoutParams activateParamsoffLine = new LinearLayout.LayoutParams(dip2px(180), dip2px(40));
+        activateParamsoffLine.gravity = Gravity.CENTER;
+        activateParamsoffLine.topMargin = dip2px(5);
+        activateParamsoffLine.rightMargin = dip2px(40);
+        activateParamsoffLine.leftMargin = dip2px(40);
+        btOffLineActive = new Button(context);
+        // activateBtn.setId(100);
+        btOffLineActive.setText("离线激活");
+        btOffLineActive.setTextSize(dip2px(12));
+        btOffLineActive.setTextColor(context.getResources().getColor(R.color.white));
+        btOffLineActive.setBackgroundColor(context.getResources().getColor(R.color.buttonColor));
+
+
+        LinearLayout.LayoutParams tvOffLineParams = new LinearLayout.LayoutParams(dip2px(380), dip2px(48));
+        tvOffLineParams.gravity = Gravity.CENTER;
+        tvOffLineParams.topMargin = dip2px(8);
+        tvOffLineParams.rightMargin = dip2px(20);
+        tvOffLineParams.leftMargin = dip2px(20);
+        tvOffLineText = new TextView(context);
+        tvOffLineText.setText("离线激活:将激活文件置于SD卡根目录（/storage/emulated/0）中，SDK会自动进行激活");
+        tvOffLineText.setTextSize(dip2px(8));
+        tvOffLineText.setTextColor(context.getResources().getColor(R.color.black));
+
+        LinearLayout.LayoutParams backParams = new LinearLayout.LayoutParams(dip2px(180), dip2px(40));
         backParams.gravity = Gravity.CENTER;
-        backParams.topMargin = dip2px(5);;
+        backParams.topMargin = dip2px(5);
         backParams.bottomMargin = dip2px(20);
         backParams.rightMargin = dip2px(40);
         backParams.leftMargin = dip2px(40);
         backBtn = new Button(context);
         // activateBtn.setId(100);
         backBtn.setText("返      回");
+        backBtn.setTextColor(context.getResources().getColor(R.color.white));
+        backBtn.setBackgroundColor(context.getResources().getColor(R.color.buttonColor));
+        backBtn.setTextSize(dip2px(12));
 
         root.addView(titleTv, titleParams);
         root.addView(deviceIdTv, deviceIdParams);
         root.addView(keyEt, keyParams);
         root.addView(activateBtn, activateParams);
+        root.addView(tvOnLineText,activateParamsone);
+        root.addView(btOffLineActive,activateParamsoffLine);
+        root.addView(tvOffLineText,tvOffLineParams);
         root.addView(backBtn, backParams);
         return root;
     }
@@ -201,6 +265,14 @@ public class Activation {
             }
         });
 
+        btOffLineActive.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String path = getSDPath();
+                offLineActive(path);
+            }
+        });
+
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -211,6 +283,101 @@ public class Activation {
         });
 
     }
+
+
+    private void offLineActive(String path) {
+
+        if (FaceSDK.getAuthorityStatus() == AndroidLicenser.ErrorCode.SUCCESS.ordinal()) {
+            Toast.makeText(context, "已经激活成功", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String firstPath = path + "/" + "License.zip";
+        if (fileIsExists(firstPath)) {
+            if (!TextUtils.isEmpty(firstPath)) {
+                ZipUtil.unzip(firstPath);
+            }
+            if (ZipUtil.isSuccess) {
+                String secondPath = path + "/" + "Win.zip";
+                if (!TextUtils.isEmpty(secondPath)) {
+                    ZipUtil.unzip(secondPath);
+                }
+            }
+            String keyPath = path + "/" + "license.key";
+            String key = readFile(keyPath, "key");
+            PreferencesUtil.putString("activate_key", key);
+            String liscensePaht = path + "/" + "license.ini";
+            String liscense = readFile(liscensePaht, "liscense");
+            success = FileUitls.c(context, FaceSDKManager.LICENSE_NAME, list);
+            if (success) {
+                toast("激活成功");
+                FaceSDKManager.initStatus = FaceSDKManager.SDK_UNINIT;
+                FaceSDKManager.getInstance().init(context);
+            } else {
+                toast("激活失败");
+            }
+        } else {
+            toast("授权文件不存在!");
+        }
+    }
+
+    //读取文本文件中的内容
+    public String readFile(String strFilePath, String mark) {
+        String path = strFilePath;
+        String content = ""; //文件内容字符串
+        //打开文件
+        File file = new File(path);
+        //如果path是传递过来的参数，可以做一个非目录的判断
+        if (file.isDirectory()) {
+            Log.d("TestFile", "The File doesn't not exist.");
+        } else {
+            try {
+                InputStream instream = new FileInputStream(file);
+                if (instream != null) {
+                    InputStreamReader inputreader = new InputStreamReader(instream);
+                    BufferedReader buffreader = new BufferedReader(inputreader);
+                    String line;
+                    //分行读取
+                    while ((line = buffreader.readLine()) != null) {
+                        content = line;
+                        if (mark.equals("liscense")) {
+                            list.add(line);
+                        }
+                    }
+                    instream.close();
+                }
+            } catch (java.io.FileNotFoundException e) {
+                Log.d("TestFile", "The File doesn't not exist.");
+            } catch (IOException e) {
+                Log.d("TestFile", e.getMessage());
+            }
+        }
+        return content;
+    }
+
+    //判断文件是否存在
+    public boolean fileIsExists(String strFile) {
+        try {
+            File f = new File(strFile);
+            if (!f.exists()) {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public String getSDPath() {
+        File sdDir = null;
+        boolean sdCardExist = Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);//判断sd卡是否存在
+        if (sdCardExist) {
+            sdDir = Environment.getExternalStorageDirectory();//获取跟目录
+        }
+        return sdDir.toString();
+    }
+
     private void toast(final String text) {
         handler.post(new Runnable() {
             @Override

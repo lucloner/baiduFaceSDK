@@ -156,6 +156,28 @@ public class FaceApi {
         return ret;
     }
 
+    public int getFeature(Bitmap bitmap, byte[] feature, int minFaceSize) {
+        if (bitmap == null) {
+            return -1;
+        }
+        ARGBImg argbImg = FeatureUtils.getImageInfo(bitmap);
+        int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, feature, minFaceSize);
+
+        return ret;
+    }
+
+
+    public int getFeatureForIDPhoto(Bitmap bitmap, byte[] feature, int minFaceSize) {
+        if (bitmap == null) {
+            return -1;
+        }
+        ARGBImg argbImg = FeatureUtils.getImageInfo(bitmap);
+        int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeatureForIDPhoto(argbImg, feature, minFaceSize);
+
+        return ret;
+    }
+
+
     public float match(String image1, String image2, int type, Context context) {
         if (TextUtils.isEmpty(image1) || TextUtils.isEmpty(image2)) {
             return -1;
@@ -227,6 +249,19 @@ public class FaceApi {
         return score;
     }
 
+    public float matchIDPhoto(final byte[] photoFeature, int[] argbData, int rows, int cols, int[] landmarks) {
+        if (photoFeature == null || argbData == null || landmarks == null) {
+            return -1;
+        }
+        byte[] imageFrameFeature = new byte[2048];
+
+        FaceSDKManager.getInstance().getFaceFeature().extractFeatureForIDPhoto(argbData, rows, cols,
+                imageFrameFeature, landmarks);
+        final float score = FaceSDKManager.getInstance().getFaceFeature().getFaceFeatureDistanceForIDPhoto(photoFeature,
+                imageFrameFeature);
+        return score;
+    }
+
     public float match(final byte[] feature1, final byte[] feature2) {
         if (feature1 == null || feature2 == null) {
             return -1;
@@ -235,6 +270,16 @@ public class FaceApi {
         final float score = FaceSDKManager.getInstance().getFaceFeature().getFaceFeatureDistance(feature1, feature2);
         return score;
     }
+
+    public float matchIDPhoto(final byte[] feature1, final byte[] feature2) {
+        if (feature1 == null || feature2 == null) {
+            return -1;
+        }
+
+        final float score = FaceSDKManager.getInstance().getFaceFeature().getFaceFeatureDistanceForIDPhoto(feature1, feature2);
+        return score;
+    }
+
 
     public IdentifyRet identity(String image, int type, String groupId, Context context) {
         if (TextUtils.isEmpty(image) || TextUtils.isEmpty(groupId)) {
@@ -331,6 +376,38 @@ public class FaceApi {
             Map.Entry<String, byte[]>  entry = (Map.Entry<String, byte[]>) iterator.next();
             byte[] feature = entry.getValue();
             final float score = FaceSDKManager.getInstance().getFaceFeature().getFaceFeatureDistance(
+                    feature, imageFrameFeature);
+            if (score > identifyScore) {
+                identifyScore = score;
+                userIdOfMaxScore = entry.getKey();
+            }
+        }
+
+        return new IdentifyRet(userIdOfMaxScore, identifyScore);
+    }
+
+
+    public IdentifyRet identityForIDPhoto(int[] argbData, int rows, int cols, int[] landmarks, String groupId) {
+        if (argbData == null || landmarks == null || groupId == null || TextUtils.isEmpty(groupId)) {
+            return null;
+        }
+        HashMap<String, byte[]> userId2Feature = group2Facesets.get(groupId);
+
+        long startExtraTime = System.currentTimeMillis();
+        byte[] imageFrameFeature = new byte[2048];
+
+        FaceSDKManager.getInstance().getFaceFeature().extractFeatureForIDPhoto(argbData, rows, cols,
+                imageFrameFeature, landmarks);
+        // Log.i("identity", "extractFeature duration->" + (System.currentTimeMillis() - startExtraTime));
+
+        String userIdOfMaxScore = "";
+        float identifyScore = 0;
+        Iterator iterator = userId2Feature.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<String, byte[]>  entry = (Map.Entry<String, byte[]>) iterator.next();
+            byte[] feature = entry.getValue();
+            final float score = FaceSDKManager.getInstance().getFaceFeature().getFaceFeatureDistanceForIDPhoto(
                     feature, imageFrameFeature);
             if (score > identifyScore) {
                 identifyScore = score;

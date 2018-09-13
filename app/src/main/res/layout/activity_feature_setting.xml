@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.baidu.aip.ofr.FeatureSettingActivity">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="25dp"
+            android:gravity="center"
+            android:text="特征抽取模型设置："
+            android:textColor="@color/black"
+            android:textSize="17dp"/>
+
+        <RadioGroup
+            android:id="@+id/rg_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/rb_recognize_live"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="生活照模型"
+                android:textColor="@android:color/holo_red_light"
+                android:textSize="16dp"
+                android:visibility="visible"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="使用此模型的典型场景：生活照图片，手机拍摄图片，镜头实时采集的图片等。"
+                android:textColor="@color/black"
+                android:visibility="visible"/>
+
+            <RadioButton
+                android:id="@+id/rb_recognize_id_photo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:text="证件照模型"
+                android:textColor="@android:color/holo_red_light"
+                android:textSize="16dp"
+                android:visibility="visible"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="使用此模型的典型场景：身份证芯片照，各类证件照（如工卡，学生证，会员卡照片等），带水纹小图等。"
+                android:textColor="@color/black"
+                android:visibility="visible"/>
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="30dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginTop="10dp"
+            android:text="注意：一经选择一个模型，则所有业务流程的特征抽取处理，都会使用此模型，两个模型不可同时作用。如业务中设计证件照的特征抽取，请务必选择证件照模型。"
+            android:textColor="@android:color/holo_red_light"/>
+    </LinearLayout>
+
+
+    <Button
+        android:id="@+id/confirm_btn"
+        android:layout_width="250dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="40dp"
+        android:background="@color/buttonColor"
+        android:text="确定"
+        android:textColor="@color/white"/>
+
+
+</LinearLayout>

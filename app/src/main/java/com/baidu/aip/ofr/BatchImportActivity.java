@@ -159,11 +159,9 @@ public class BatchImportActivity extends Activity implements View.OnClickListene
             File batchfaceDir = FileUitls.getBatchFaceDirectory(batchPath);
             String[] files =  batchfaceDir.list();
             if (files == null || files.length == 0) {
-                Log.i("wtf", "总人脸数:" + files.length);
                 Toast.makeText(this, "导入数据的文件夹没有数据", Toast.LENGTH_SHORT).show();
                 return;
             }
-
 
             progressDisplay("总人脸数:" + files.length + ", 完成：0"  + " 成功：0" + " 失败：0" );
             asyncImport(files, batchfaceDir, groupId);
@@ -188,6 +186,7 @@ public class BatchImportActivity extends Activity implements View.OnClickListene
                     if (!importing) {
                         break;
                     }
+
                     String file = files[i];
                     boolean success = false;
                     File facePath = new File(batchfaceDir, file);
@@ -195,7 +194,7 @@ public class BatchImportActivity extends Activity implements View.OnClickListene
                         Bitmap bitmap = BitmapFactory.decodeFile(facePath.getAbsolutePath());
                         ARGBImg argbImg = FeatureUtils.getImageInfo(bitmap);
                         byte[] bytes = new byte[2048];
-                        int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, bytes);
+                        int ret = FaceSDKManager.getInstance().getFaceFeature().faceFeature(argbImg, bytes, 50);
                         if (ret == FaceDetector.NO_FACE_DETECTED) {
                             progressDisplay("未检测到人脸，可能原因：人脸太小（必须大于最小检测人脸minFaceSize），"
                                     + "或者人脸角度太大，人脸不是朝上");
