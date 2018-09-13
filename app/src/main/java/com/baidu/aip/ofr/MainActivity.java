@@ -238,6 +238,56 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+
+    //读取文本文件中的内容
+    public String readFile(String strFilePath, String mark) {
+        String path = strFilePath;
+        String content = ""; //文件内容字符串
+        //打开文件
+        File file = new File(path);
+        //如果path是传递过来的参数，可以做一个非目录的判断
+        if (file.isDirectory()) {
+            Log.d("TestFile", "The File doesn't not exist.");
+        } else {
+            try {
+                InputStream instream = new FileInputStream(file);
+                if (instream != null) {
+                    InputStreamReader inputreader = new InputStreamReader(instream);
+                    BufferedReader buffreader = new BufferedReader(inputreader);
+                    String line;
+                    //分行读取
+                    while ((line = buffreader.readLine()) != null) {
+                        content = line;
+                        if (mark.equals("liscense")) {
+                            list.add(line);
+                        }
+                    }
+                    instream.close();
+                }
+            } catch (java.io.FileNotFoundException e) {
+                Log.d("TestFile", "The File doesn't not exist.");
+            } catch (IOException e) {
+                Log.d("TestFile", e.getMessage());
+            }
+        }
+        return content;
+    }
+
+    //判断文件是否存在
+    public boolean fileIsExists(String strFile) {
+        try {
+            File f = new File(strFile);
+            if (!f.exists()) {
+                return false;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+
     private AlertDialog alertDialog;
     private String[] items;
 
@@ -288,7 +338,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
             startActivity(intent);
         } else if (type == LivenessSettingActivity.TYPE_RGB_DEPTH_LIVENSS) {
             Toast.makeText(this, "当前活体策略：双目RGB+Depth活体", Toast.LENGTH_LONG).show();
-            Intent intent = new Intent(MainActivity.this, OrbbecVideoMatchImageActivity.class);
+            int cameraType = PreferencesUtil.getInt(GlobalFaceTypeModel.TYPE_CAMERA, GlobalFaceTypeModel.ORBBEC);
+            Intent intent = null;
+            if (cameraType == GlobalFaceTypeModel.ORBBEC) {
+                intent = new Intent(MainActivity.this, OrbbecVideoMatchImageActivity.class);
+            } else if (cameraType == GlobalFaceTypeModel.IMIMECT) {
+                intent = new Intent(MainActivity.this, IminectVideoMatchImageActivity.class);
+            } else if (cameraType == GlobalFaceTypeModel.ORBBECPRO) {
+                intent = new Intent(MainActivity.this, OrbbecProVideoMatchImageActivity.class);
+            }
             startActivity(intent);
         }
     }

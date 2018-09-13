@@ -24,28 +24,45 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <activity android:name="com.baidu.aip.ofr.RgbVideoIdentityActivity"
-                  android:hardwareAccelerated="true"/>
-        <activity android:name="com.baidu.aip.ofr.RgbVideoMatchImageActivity"
-                  android:hardwareAccelerated="true"/>
-        <activity android:name="com.baidu.aip.ofr.ImageMacthImageActivity"/>
-        <activity android:name="com.baidu.aip.ofr.UserGroupManagerActivity"/>
-        <activity android:name="com.baidu.aip.ofr.RegActivity"/>
-        <activity android:name="com.baidu.aip.ofr.RgbDetectActivity"/>
-        <activity android:name="com.baidu.aip.ofr.AddGroupActivity"/>
-        <activity android:name="com.baidu.aip.ofr.GroupListActivity"/>
-        <activity android:name="com.baidu.aip.ofr.UserListActivity"/>
-        <activity android:name="com.baidu.aip.ofr.UserActivity"/>
-        <activity android:name="com.baidu.aip.ofr.BatchImportActivity"/>
-        <activity android:name="com.baidu.aip.ofr.LivenessSettingActivity"/>
-        <activity android:name="com.baidu.aip.ofr.OrbbecLivenessDetectActivity"/>
-        <activity android:name="com.baidu.aip.ofr.OrbbecVideoMatchImageActivity"/>
-        <activity android:name="com.baidu.aip.ofr.OrbbecVideoIdentifyActivity"/>
-        <activity android:name="com.baidu.aip.ofr.RgbIrLivenessActivity"/>
-        <activity android:name="com.baidu.aip.ofr.RgbIrVideoMathImageActivity"/>
-        <activity android:name="com.baidu.aip.ofr.RgbIrVideoIdentifyActivity"/>
-
+        <activity
+            android:name=".RgbVideoIdentityActivity"
+            android:hardwareAccelerated="true"/>
+        <activity
+            android:name=".RgbVideoMatchImageActivity"
+            android:hardwareAccelerated="true"/>
+        <activity android:name=".ImageMacthImageActivity"/>
+        <activity android:name=".UserGroupManagerActivity"/>
+        <activity android:name=".RegActivity"/>
+        <activity android:name=".RgbDetectActivity"/>
+        <activity android:name=".AddGroupActivity"/>
+        <activity android:name=".GroupListActivity"/>
+        <activity android:name=".UserListActivity"/>
+        <activity android:name=".UserActivity"/>
+        <activity android:name=".BatchImportActivity"/>
+        <activity android:name=".LivenessSettingActivity"/>
+        <activity android:name=".OrbbecLivenessDetectActivity"/>
+        <activity android:name=".OrbbecVideoMatchImageActivity"/>
+        <activity android:name=".OrbbecVideoIdentifyActivity"/>
+        <activity android:name=".RgbIrLivenessActivity"/>
+        <activity android:name=".RgbIrVideoMathImageActivity"/>
+        <activity android:name=".RgbIrVideoIdentifyActivity"/>
+        <activity android:name=".RgbVideoAttributeTrackActivity"/>
+        <activity android:name=".RgbIrVideoAttributeActivity"/>
+        <activity android:name=".OrbbecVideoAttributeActivity"/>
+        <activity android:name=".IminectVideoIdentifyActivity"/>
+        <activity android:name=".IminectLivenessDetectActivity"/>
+        <activity android:name=".IminectVideoMatchImageActivity"/>
+        <activity android:name=".IminectVideoAtrributeActivity"/>
+        <activity android:name=".MultiThreadActivity">
+        </activity>
+        <activity android:name=".FeatureSettingActivity">
+        </activity>
+        <activity android:name=".OrbbecProVideoIdentifyActivity"/>
+        <activity android:name=".OrbbecProVideoAttributeActivity"/>
+        <activity android:name=".OrbbecProVideoMatchImageActivity"/>
+        <activity android:name=".OrbbecProLivenessDetectActivity"/>
+        <activity android:name=".QuestiongActivity">
+        </activity>
     </application>
 
 </manifest>
